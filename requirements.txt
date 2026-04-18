@@ -1,6 +1,8 @@
-# RadioPlayerV3 — use Python 3.10.x for installs (pip).
-# tgcalls==2.0.0 has PyPI wheels only for cp36–cp310, not Python 3.11+.
-# On Python 3.11+, pip only offers tgcalls 3.x dev builds and install fails with pytgcalls==2.1.0.
+# RadioPlayerV3 — tgcalls==2.0.0 (required by pytgcalls==2.1.0) wheel layout:
+# - Linux manylinux: only cp36–cp39 (no cp310-manylinux on PyPI).
+# - Windows/macOS: cp310 wheels exist — use Python 3.10 locally on those OSes.
+# - Python 3.11+: no tgcalls 2.0.0 wheels at all.
+# Docker/Linux servers: use Python 3.9 (see Dockerfile).
 wget
 wheel
 psutil

@@ -7,23 +7,29 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 echo "RadioPlayerV3 — Docker setup (interactive .env + optional deploy)"
-echo "Requires: Docker with Compose v2 (docker compose); Python 3.10 with"
-echo "          pip install -r requirements.txt if you generate a session string here."
+echo "Requires: Docker with Compose v2 (docker compose); Python 3.9 (Linux) or 3.10 (Windows/macOS)"
+echo "          with pip install -r requirements.txt if you generate a session string here."
 echo ""
 
 _pick_python() {
+  if command -v python3.9 >/dev/null 2>&1; then
+    echo "python3.9"
+    return 0
+  fi
   if command -v python3.10 >/dev/null 2>&1; then
     echo "python3.10"
     return 0
   fi
   if command -v python3 >/dev/null 2>&1; then
-    if python3 -c "import sys; sys.exit(0 if sys.version_info[:2] == (3, 10) else 1)" 2>/dev/null; then
+    ver=$(python3 -c "import sys; print('%d.%d' % sys.version_info[:2])" 2>/dev/null || true)
+    if [[ "$ver" == "3.9" || "$ver" == "3.10" ]]; then
       echo "python3"
       return 0
     fi
   fi
   if command -v python >/dev/null 2>&1; then
-    if python -c "import sys; sys.exit(0 if sys.version_info[:2] == (3, 10) else 1)" 2>/dev/null; then
+    ver=$(python -c "import sys; print('%d.%d' % sys.version_info[:2])" 2>/dev/null || true)
+    if [[ "$ver" == "3.9" || "$ver" == "3.10" ]]; then
       echo "python"
       return 0
     fi
@@ -34,8 +40,8 @@ _pick_python() {
 PYTHON="$(_pick_python)" || PYTHON=""
 
 if [[ -z "$PYTHON" ]]; then
-  echo "Error: Python 3.10 not found (e.g. apt install python3.10 python3.10-venv)."
-  echo "tgcalls==2.0.0 requires Python 3.6–3.10 for PyPI wheels; 3.11+ will not install."
+  echo "Error: Python 3.9 (Linux) or 3.10 (Windows/macOS) not found."
+  echo "tgcalls==2.0.0: Linux manylinux wheels are cp39 max; use 3.9 on Linux."
   exit 1
 fi
 

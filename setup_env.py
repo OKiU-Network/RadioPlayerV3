@@ -236,7 +236,7 @@ def main() -> None:
     print()
     print(f"Wrote {env_path}")
     print("Start the bot: run.bat   or   py -3.10 main.py")
-    print("(Use Python 3.10: tgcalls 2.0.0 has PyPI wheels for cp310 only, not 3.11+.)")
+    print("(Linux: Python 3.9 for tgcalls wheels. Windows/macOS: 3.10. Not 3.11+.)")
     print()
 
 
