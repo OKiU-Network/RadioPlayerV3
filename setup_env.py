@@ -235,8 +235,15 @@ def main() -> None:
     _write_env(env_path, data)
     print()
     print(f"Wrote {env_path}")
-    print("Start the bot: run.bat   or   py -3.10 main.py")
-    print("(Linux: Python 3.9 for tgcalls wheels. Windows/macOS: 3.10. Not 3.11+.)")
+    if sys.platform == "win32":
+        print("Start the bot: run.bat   or   py -3.10 main.py")
+    elif sys.platform == "darwin":
+        print("Start the bot: python3.10 main.py   (or python3 main.py if 3.10 is default)")
+    else:
+        # Linux: `py` is not the Windows launcher — use python3.9 (tgcalls manylinux wheels).
+        print("Start the bot: python3.9 main.py")
+        print("  (activate venv first if you use one: source venv/bin/activate && python main.py)")
+    print("(tgcalls: Linux → Python 3.9; Windows/macOS → 3.10. Not 3.11+.)")
     print()
 
 
