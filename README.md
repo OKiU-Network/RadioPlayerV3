@@ -107,8 +107,15 @@ python3 main.py
 
 Image uses **Python 3.11** (bookworm-slim), **FFmpeg**, and **git** (for the `downloader` pip dependency). Build from the repo root where `Dockerfile` and `docker-compose.yml` live.
 
-1. Copy **`.env.sample`** → **`.env`** and fill in values (same as non-Docker).
-2. Deploy (from repo root):
+**Interactive wizard (same questions as `setup_env.py`)** — writes **`.env`**, then optionally runs **`docker compose up -d --build`**:
+
+```bash
+python setup_docker.py
+```
+
+On Windows you can double-click **`setup_docker.bat`** (needs Docker Desktop and Python with `pip install -r requirements.txt` if you generate a session string).
+
+**Manual:** copy **`.env.sample`** → **`.env`** and fill in values, then deploy (from repo root):
 
 ```bash
 chmod +x scripts/deploy-docker.sh
