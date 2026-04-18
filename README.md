@@ -103,6 +103,30 @@ python3 main.py
 
 ---
 
+## 🐳 Docker (Linux server)
+
+Image uses **Python 3.11** (bookworm-slim), **FFmpeg**, and **git** (for the `downloader` pip dependency). Build from the repo root where `Dockerfile` and `docker-compose.yml` live.
+
+1. Copy **`.env.sample`** → **`.env`** and fill in values (same as non-Docker).
+2. Build and run with Compose:
+
+```bash
+docker compose up -d --build
+```
+
+Logs: `docker compose logs -f` · Stop: `docker compose down`
+
+**Without Compose** (plain Docker):
+
+```bash
+docker build -t radioplayerv3 .
+docker run -d --name radioplayerv3 --restart unless-stopped --env-file .env radioplayerv3
+```
+
+Do **not** commit `.env`; mount or pass `--env-file` only on the server.
+
+---
+
 ## 🪟 Windows & Pyrogram 2 (this tree)
 
 This codebase includes fixes for **Pyrogram 2**, **Telegram API layer 158** (voice chat updates), and **Windows** (FFmpeg resolution, no FIFO, optional `CHAT_ID` as `@username`).
@@ -148,5 +172,6 @@ Copyright (c) 2021  Asm Safone
 * **`pytgcalls_layer_patch.py`** — Patch for **Telegram layer 158**: `GroupCall` no longer has `.params`; handle **`UpdateGroupCallConnection`**; use `getattr(..., "params", None)` on `UpdateGroupCall`.
 * **Scripts** — `setup_env.py` (interactive `.env` + optional session generation), `setup.bat`, `install_deps.bat`, `run.bat`.
 * **`.gitignore`** — `__pycache__/`, `downloads/`, `ffmpeg.log`, etc.
+* **Docker** — `Dockerfile` (Python 3.11-slim + FFmpeg + git), `docker-compose.yml` (volume for `downloads`, `env_file: .env`), `.dockerignore`.
 
 ---

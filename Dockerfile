@@ -1,23 +1,25 @@
-# Debian Based Docker
-FROM debian:latest
+# RadioPlayerV3 — server deployment (Linux; includes FFmpeg + tgcalls wheels)
+FROM python:3.11-slim-bookworm
 
-RUN apt update && apt upgrade -y
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Installing Packages
-RUN apt install git curl python3-pip ffmpeg -y
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    git \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# Installing Pip Packages
-RUN pip3 install -U pip
+WORKDIR /app
 
-# Copying Requirements
-COPY requirements.txt /requirements.txt
+COPY requirements.txt .
+RUN pip install --upgrade pip wheel \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Installing Requirements
-RUN cd /
-RUN pip3 install -U -r requirements.txt
-RUN mkdir /RadioPlayerV3
-WORKDIR /RadioPlayerV3
-COPY start.sh /start.sh
+COPY . .
 
-# Running Radio Player Bot
-CMD ["/bin/bash", "/start.sh"]
+RUN mkdir -p /app/downloads
+
+CMD ["python", "main.py"]

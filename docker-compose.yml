@@ -1,0 +1,19 @@
+# RadioPlayerV3 — copy .env beside this file, then: docker compose up -d --build
+services:
+  radio:
+    build: .
+    container_name: radioplayerv3
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - radio-downloads:/app/downloads
+    # Optional: pin to one CPU / add limits
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "2"
+    #       memory: 1G
+
+volumes:
+  radio-downloads:

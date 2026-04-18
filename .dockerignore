@@ -1,0 +1,15 @@
+.git
+.github
+.vscode
+__pycache__
+*.pyc
+*.pyo
+.env
+.env.*
+!.env.sample
+*.session
+*.session-journal
+*.raw
+*.log
+downloads
+ffmpeg.log
