@@ -21,6 +21,18 @@ die() { echo "Error: $*" >&2; exit 1; }
 
 have_cmd() { command -v "$1" >/dev/null 2>&1; }
 
+# curl | bash attaches stdin to a pipe, so plain `read` gets EOF. Prompt on the real tty.
+# Usage: read_tty "prompt " varname   (varname is the name of the variable, no $)
+read_tty() {
+  local _prompt=$1
+  local _var=$2
+  if [[ -r /dev/tty ]]; then
+    read -r -p "$_prompt" "$_var" < /dev/tty
+  else
+    read -r -p "$_prompt" "$_var"
+  fi
+}
+
 # User to add to docker group (not root)
 effective_user() {
   if [[ -n "${SUDO_USER:-}" ]]; then
@@ -228,9 +240,9 @@ main() {
     repo="$REPO_DEFAULT"
     echo "Using existing clone: $dest (--local)"
   else
-    read -r -p "Git clone URL [$REPO_DEFAULT]: " repo
+    read_tty "Git clone URL [$REPO_DEFAULT]: " repo
     repo=${repo:-$REPO_DEFAULT}
-    read -r -p "Install directory [$INSTALL_DIR_DEFAULT]: " dest
+    read_tty "Install directory [$INSTALL_DIR_DEFAULT]: " dest
     dest=${dest:-$INSTALL_DIR_DEFAULT}
   fi
 
@@ -238,7 +250,7 @@ main() {
   echo "How do you want to run the bot?"
   echo "  1) Docker (recommended — matches Dockerfile Python 3.9, easiest on fresh VMs)"
   echo "  2) Bare-metal — Python 3.9 venv (no Docker; you run main.py directly)"
-  read -r -p "Choice [1]: " mode
+  read_tty "Choice [1]: " mode
   mode=${mode:-1}
 
   echo ""
@@ -280,12 +292,16 @@ main() {
     echo "     cd $dest && ./scripts/deploy-docker.sh"
     echo "   or:   cd $dest && docker compose up -d --build"
     echo ""
-    read -r -p "Run interactive setup wizard (writes .env + optional compose)? [y/N]: " wiz
+    read_tty "Run interactive setup wizard (writes .env + optional compose)? [y/N]: " wiz
     if [[ "${wiz,,}" == "y" || "${wiz,,}" == "yes" ]]; then
-      if [[ -x ./setup_docker.sh ]]; then
-        ./setup_docker.sh || bash scripts/setup_docker.sh
+      if [[ -r /dev/tty ]]; then
+        if [[ -x ./setup_docker.sh ]]; then
+          ./setup_docker.sh </dev/tty
+        else
+          bash scripts/setup_docker.sh </dev/tty
+        fi
       else
-        bash scripts/setup_docker.sh
+        [[ -x ./setup_docker.sh ]] && ./setup_docker.sh || bash scripts/setup_docker.sh
       fi
     fi
   else
@@ -300,9 +316,13 @@ main() {
     echo "  python setup_env.py    # interactive .env"
     echo "  python main.py"
     echo ""
-    read -r -p "Run interactive .env wizard now? [y/N]: " wiz
+    read_tty "Run interactive .env wizard now? [y/N]: " wiz
     if [[ "${wiz,,}" == "y" || "${wiz,,}" == "yes" ]]; then
-      ./venv/bin/python setup_env.py
+      if [[ -r /dev/tty ]]; then
+        ./venv/bin/python setup_env.py </dev/tty
+      else
+        ./venv/bin/python setup_env.py
+      fi
     fi
   fi
 
