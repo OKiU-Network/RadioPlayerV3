@@ -105,6 +105,17 @@ python3 main.py
 
 ## 🐳 Docker (Linux server)
 
+### Fresh VM (nothing installed yet)
+
+On **Ubuntu, Linux Mint, Debian, Fedora, or Arch** (also Manjaro / Endeavour), run from a clone of this repo:
+
+```bash
+chmod +x scripts/bootstrap-fresh-vm.sh bootstrap-fresh-vm.sh
+./bootstrap-fresh-vm.sh
+```
+
+Or: `bash scripts/bootstrap-fresh-vm.sh` — it installs **git, curl, ffmpeg**, optionally **Docker**, then clones/updates the repo and walks you through **Docker** vs **bare-metal Python 3.9**. On a totally empty system you may need `curl`/`git` once to fetch the script (e.g. `sudo apt install -y curl git`).
+
 Image uses **Python 3.9** (bookworm-slim), **FFmpeg**, and **git** (for the `downloader` pip dependency). Build from the repo root where `Dockerfile` and `docker-compose.yml` live.
 
 **Why 3.9:** **`tgcalls==2.0.0`** publishes **Linux (`manylinux`) wheels only for Python 3.6–3.9** — there is no `cp310` Linux wheel. **Windows/macOS** have **`cp310`** wheels, so use **Python 3.10** there. On **Python 3.11+**, `tgcalls==2.0.0` has no wheels.
