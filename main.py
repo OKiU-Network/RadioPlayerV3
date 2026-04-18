@@ -47,6 +47,49 @@ if not os.path.isdir("./downloads"):
     os.makedirs("./downloads")
 async def main():
     async with bot:
+        await bot.invoke(
+            SetBotCommands(
+                scope=BotCommandScopeDefault(),
+                lang_code="en",
+                commands=[
+                    BotCommand(command="start", description="Start The Bot"),
+                    BotCommand(command="help", description="Show Help Message"),
+                    BotCommand(command="play", description="Play Music From YouTube"),
+                    BotCommand(command="song", description="Download Music As Audio"),
+                    BotCommand(command="skip", description="Skip The Current Music"),
+                    BotCommand(command="pause", description="Pause The Current Music"),
+                    BotCommand(command="resume", description="Resume The Paused Music"),
+                    BotCommand(command="radio", description="Start Radio / Live Stream"),
+                    BotCommand(command="current", description="Show Current Playing Song"),
+                    BotCommand(command="playlist", description="Show The Current Playlist"),
+                    BotCommand(command="join", description="Join To The Voice Chat"),
+                    BotCommand(command="leave", description="Leave From The Voice Chat"),
+                    BotCommand(command="stop", description="Stop Playing The Music"),
+                    BotCommand(command="stopradio", description="Stop Radio / Live Stream"),
+                    BotCommand(command="replay", description="Replay From The Begining"),
+                    BotCommand(command="clean", description="Clean Unused RAW PCM Files"),
+                    BotCommand(command="mute", description="Mute Userbot In Voice Chat"),
+                    BotCommand(command="unmute", description="Unmute Userbot In Voice Chat"),
+                    BotCommand(command="volume", description="Change The Voice Chat Volume"),
+                    BotCommand(command="restart", description="Update & Restart Bot (Owner Only)"),
+                    BotCommand(command="setvar", description="Set / Change Configs Var (For Heroku)"),
+                ],
+            )
+        )
+        try:
+            await USER.join_chat(CHAT_ID)
+        except Exception as e:
+            print(f"join_chat(CHAT_ID): {e}")
+        try:
+            ch = await USER.get_chat(CHAT_ID)
+            print(f"CHAT_ID ok for session user: {getattr(ch, 'title', None)!r} (id={ch.id})")
+        except Exception as e:
+            print(
+                f"Session user still cannot access CHAT_ID={CHAT_ID}: {e}\n"
+                "Use the same account that generated SESSION_STRING, add it to the group, "
+                "and set CHAT_ID to this chat (negative id for groups). For private groups, "
+                "forward any message from the group to @userinfobot or @getidsbot to copy the id."
+            )
         await mp.start_radio()
         try:
             await USER.join_chat("AsmSafone")
@@ -66,98 +109,6 @@ def stop_and_restart():
 bot.run(main())
 bot.start()
 print("\n\nRadio Player Bot Started, Join @AsmSafone!")
-bot.send(
-    SetBotCommands(
-        scope=BotCommandScopeDefault(),
-        lang_code="en",
-        commands=[
-            BotCommand(
-                command="start",
-                description="Start The Bot"
-            ),
-            BotCommand(
-                command="help",
-                description="Show Help Message"
-            ),
-            BotCommand(
-                command="play",
-                description="Play Music From YouTube"
-            ),
-            BotCommand(
-                command="song",
-                description="Download Music As Audio"
-            ),
-            BotCommand(
-                command="skip",
-                description="Skip The Current Music"
-            ),
-            BotCommand(
-                command="pause",
-                description="Pause The Current Music"
-            ),
-            BotCommand(
-                command="resume",
-                description="Resume The Paused Music"
-            ),
-            BotCommand(
-                command="radio",
-                description="Start Radio / Live Stream"
-            ),
-            BotCommand(
-                command="current",
-                description="Show Current Playing Song"
-            ),
-            BotCommand(
-                command="playlist",
-                description="Show The Current Playlist"
-            ),
-            BotCommand(
-                command="join",
-                description="Join To The Voice Chat"
-            ),
-            BotCommand(
-                command="leave",
-                description="Leave From The Voice Chat"
-            ),
-            BotCommand(
-                command="stop",
-                description="Stop Playing The Music"
-            ),
-            BotCommand(
-                command="stopradio",
-                description="Stop Radio / Live Stream"
-            ),
-            BotCommand(
-                command="replay",
-                description="Replay From The Begining"
-            ),
-            BotCommand(
-                command="clean",
-                description="Clean Unused RAW PCM Files"
-            ),
-            BotCommand(
-                command="mute",
-                description="Mute Userbot In Voice Chat"
-            ),
-            BotCommand(
-                command="unmute",
-                description="Unmute Userbot In Voice Chat"
-            ),
-            BotCommand(
-                command="volume",
-                description="Change The Voice Chat Volume"
-            ),
-            BotCommand(
-                command="restart",
-                description="Update & Restart Bot (Owner Only)"
-            ),
-            BotCommand(
-                command="setvar",
-                description="Set / Change Configs Var (For Heroku)"
-            )
-        ]
-    )
-)
 
 @bot.on_message(filters.command(["restart", f"restart@{USERNAME}"]) & filters.user(ADMINS) & (filters.chat(CHAT_ID) | filters.private | filters.chat(LOG_GROUP)))
 async def restart(_, message: Message):

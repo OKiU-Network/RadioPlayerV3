@@ -8,3 +8,6 @@ unknown_errors.txt
 .env
 test.py
 .vscode/
+__pycache__/
+downloads/
+ffmpeg.log

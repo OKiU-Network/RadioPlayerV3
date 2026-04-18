@@ -103,6 +103,20 @@ python3 main.py
 
 ---
 
+## 🪟 Windows & Pyrogram 2 (this tree)
+
+This codebase includes fixes for **Pyrogram 2**, **Telegram API layer 158** (voice chat updates), and **Windows** (FFmpeg resolution, no FIFO, optional `CHAT_ID` as `@username`).
+
+* Use **Python 3.10 or 3.11** (not 3.12 for local Windows: `tgcalls` wheels).
+* Install deps: run **`install_deps.bat`** or `py -3.10 -m pip install -r requirements.txt`.
+* Create `.env`: run **`setup.bat`** / `python setup_env.py`, or copy **`.env.sample`**.
+* Run: **`run.bat`** or `py -3.10 main.py`.
+* Install **FFmpeg** (e.g. `winget install Gyan.FFmpeg`) and ensure it is on `PATH`, or rely on WinGet’s install path (the bot tries to find it).
+
+Do **not** commit `.env` or session files (see `.gitignore`).
+
+---
+
 ## 📄 License
 
 ```text

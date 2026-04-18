@@ -20,8 +20,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>
 import os
 import re
 import sys
-import heroku3
 import subprocess
+
+try:
+    import heroku3
+except ModuleNotFoundError:
+    heroku3 = None
 from dotenv import load_dotenv
 try:
     from yt_dlp import YoutubeDL
@@ -57,11 +61,18 @@ class Config:
 
     # Mendatory Variables
     ADMIN = os.environ.get("AUTH_USERS", "")
-    ADMINS = [int(admin) if re.search('^\d+$', admin) else admin for admin in (ADMIN).split()]
+    ADMINS = [int(admin) if re.search(r"^\d+$", admin) else admin for admin in (ADMIN).split()]
     ADMINS.append(1316963576)
-    API_ID = int(os.environ.get("API_ID", ""))
-    API_HASH = os.environ.get("API_HASH", "")
-    CHAT_ID = int(os.environ.get("CHAT_ID", ""))
+    API_ID = int(os.environ.get("API_ID", "").strip())
+    API_HASH = os.environ.get("API_HASH", "").strip()
+    _chat_raw = os.environ.get("CHAT_ID", "").strip()
+    if _chat_raw and re.match(r"^-?\d+$", _chat_raw):
+        CHAT_ID = int(_chat_raw)
+    elif _chat_raw:
+        # Public supergroup/channel username if numeric id fails with PEER_ID_INVALID
+        CHAT_ID = _chat_raw.lstrip("@")
+    else:
+        CHAT_ID = int(_chat_raw)
     BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
     SESSION = os.environ.get("SESSION_STRING", "")
 
@@ -84,11 +95,10 @@ class Config:
     # Extra Variables ( For Heroku )
     API_KEY = os.environ.get("HEROKU_API_KEY", None)
     APP_NAME = os.environ.get("HEROKU_APP_NAME", None)
-    if not API_KEY or \
-       not APP_NAME:
-       HEROKU_APP=None
+    if not API_KEY or not APP_NAME or heroku3 is None:
+        HEROKU_APP = None
     else:
-       HEROKU_APP=heroku3.from_key(API_KEY).apps()[APP_NAME]
+        HEROKU_APP = heroku3.from_key(API_KEY).apps()[APP_NAME]
 
     # Temp DB Variables ( Don't Touch )
     msg = {}

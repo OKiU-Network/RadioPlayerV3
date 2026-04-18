@@ -30,6 +30,23 @@ playlist=Config.playlist
 LOG_GROUP=Config.LOG_GROUP
 
 HOME_TEXT = "👋🏻 **Hi [{}](tg://user?id={})**,\n\nI'm **Radio Player V3.0** \nI Can Play Radio / Music / YouTube Live In Channel & Group 24x7 Nonstop. Made with ❤️ By @AsmSafone 😉!"
+
+
+def _message_name_id(message):
+    u = message.from_user
+    if u is not None:
+        return (u.first_name or u.username or "User"), u.id
+    sc = message.sender_chat
+    if sc is not None:
+        return (sc.title or "Chat"), sc.id
+    return "User", message.chat.id if message.chat else 0
+
+
+def _query_name_id(query):
+    u = query.from_user
+    if u is not None:
+        return (u.first_name or u.username or "User"), u.id
+    return "User", 0
 HELP_TEXT = """
 💡 --**Setting Up**--:
 
@@ -69,7 +86,7 @@ HELP_TEXT = """
 
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
-    if query.from_user.id not in Config.ADMINS and query.data != "help":
+    if (not query.from_user or query.from_user.id not in Config.ADMINS) and query.data != "help":
         await query.answer(
             "You're Not Allowed! 🤣",
             show_alert=True
@@ -237,8 +254,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
             ]
         reply_markup = InlineKeyboardMarkup(buttons)
         try:
+            qname, qid = _query_name_id(query)
             await query.edit_message_text(
-                HOME_TEXT.format(query.from_user.first_name, query.from_user.id),
+                HOME_TEXT.format(qname, qid),
                 reply_markup=reply_markup
             )
         except MessageNotModified:
@@ -274,7 +292,12 @@ async def start(client, message):
             ]
             ]
     reply_markup = InlineKeyboardMarkup(buttons)
-    m=await message.reply_photo(photo="https://telegra.ph/file/4e839766d45935998e9c6.jpg", caption=HOME_TEXT.format(message.from_user.first_name, message.from_user.id), reply_markup=reply_markup)
+    dname, did = _message_name_id(message)
+    m = await message.reply_photo(
+        photo="https://telegra.ph/file/4e839766d45935998e9c6.jpg",
+        caption=HOME_TEXT.format(dname, did),
+        reply_markup=reply_markup,
+    )
     await mp.delete(m)
     await mp.delete(message)
 

@@ -18,6 +18,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 import os
 import sys
+import glob
+import shutil
 import wget
 import ffmpeg
 import asyncio
@@ -33,15 +35,104 @@ except ModuleNotFoundError:
     os.execl(sys.executable, sys.executable, *sys.argv)
 from config import Config
 from asyncio import sleep
-from pyrogram import Client
+from pyrogram import Client, enums
 from signal import SIGINT
 from random import randint
+
+# pytgcalls 2.1.x calls Client.send(); Pyrogram 2 only has invoke() for raw MTProto.
+if not hasattr(Client, "send"):
+    Client.send = Client.invoke
+
+from pytgcalls_layer_patch import apply_pytgcalls_pyrogram_layer_patch
+
+apply_pytgcalls_pyrogram_layer_patch()
+
 from pytgcalls import GroupCallFactory
 from pyrogram.errors import FloodWait
 from pyrogram.utils import MAX_CHANNEL_ID
 from pyrogram.raw.types import InputGroupCall
 from pyrogram.methods.messages.download_media import DEFAULT_DOWNLOAD_DIR
 from pyrogram.raw.functions.phone import EditGroupCallTitle, CreateGroupCall
+
+
+def _ffmpeg_executable() -> str:
+    """Resolve ffmpeg binary; on Windows PATH may omit WinGet installs until a new shell."""
+    exe = shutil.which("ffmpeg")
+    if exe:
+        return exe
+    if sys.platform == "win32":
+        local = os.environ.get("LOCALAPPDATA", "")
+        if local:
+            pattern = os.path.join(
+                local, "Microsoft", "WinGet", "Packages", "Gyan.FFmpeg*", "**", "ffmpeg.exe"
+            )
+            found = glob.glob(pattern, recursive=True)
+            if found:
+                return found[0]
+    raise RuntimeError(
+        "FFmpeg not found. Install it and ensure it is on PATH, e.g. "
+        "https://ffmpeg.org/download.html or: winget install Gyan.FFmpeg (then restart the terminal)."
+    )
+
+
+def _ffmpeg_radio_stream_command(ff: str, station_url: str, pcm_out: str) -> list:
+    """FFmpeg args tuned for live radio → raw s16le (48 kHz stereo) with less buffering/jitter."""
+    cmd = [
+        ff,
+        "-y",
+        "-nostdin",
+        "-thread_queue_size",
+        "4096",
+        "-fflags",
+        "+nobuffer",
+        "-flags",
+        "low_delay",
+        "-probesize",
+        "32",
+        "-analyzeduration",
+        "0",
+    ]
+    if station_url.startswith(("http://", "https://")):
+        cmd += [
+            "-reconnect",
+            "1",
+            "-reconnect_streamed",
+            "1",
+            "-reconnect_delay_max",
+            "4",
+        ]
+    cmd += [
+        "-i",
+        station_url,
+        "-vn",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-f",
+        "s16le",
+        "-acodec",
+        "pcm_s16le",
+        "-flush_packets",
+        "1",
+        pcm_out,
+    ]
+    return cmd
+
+
+def _prepare_radio_pcm_path(chat_id: int) -> str:
+    """PCM path for streaming radio: FIFO on Unix, plain file on Windows (no os.mkfifo)."""
+    pcm_path = f"radio-{chat_id}.raw"
+    if os.path.exists(pcm_path):
+        try:
+            os.remove(pcm_path)
+        except OSError:
+            pass
+    if hasattr(os, "mkfifo"):
+        os.mkfifo(pcm_path)
+    else:
+        open(pcm_path, "wb").close()
+    return pcm_path
 
 
 bot = Client(
@@ -200,17 +291,14 @@ class MusicPlayer(object):
             RADIO.add(1)
         except:
             pass
-        if os.path.exists(f'radio-{CHAT_ID}.raw'):
-            os.remove(f'radio-{CHAT_ID}.raw')
         # credits: https://t.me/c/1480232458/6825
-        os.mkfifo(f'radio-{CHAT_ID}.raw')
-        group_call.input_filename = f'radio-{CHAT_ID}.raw'
+        radio_pcm = _prepare_radio_pcm_path(CHAT_ID)
+        group_call.input_filename = radio_pcm
         if not group_call.is_connected:
             await self.start_call()
         ffmpeg_log = open("ffmpeg.log", "w+")
-        command=["ffmpeg", "-y", "-i", station_stream_url, "-f", "s16le", "-ac", "2",
-        "-ar", "48000", "-acodec", "pcm_s16le", group_call.input_filename]
-
+        ff = _ffmpeg_executable()
+        command = _ffmpeg_radio_stream_command(ff, station_stream_url, radio_pcm)
 
         process = await asyncio.create_subprocess_exec(
             *command,
@@ -220,8 +308,6 @@ class MusicPlayer(object):
 
 
         FFMPEG_PROCESSES[CHAT_ID] = process
-        if RADIO_TITLE:
-            await self.edit_title()
         await sleep(2)
         while True:
             if group_call.is_connected:
@@ -232,6 +318,8 @@ class MusicPlayer(object):
                 await self.start_call()
                 await sleep(10)
                 continue
+        if RADIO_TITLE and getattr(self.group_call, "group_call", None) is not None:
+            await self.edit_title()
 
 
     async def stop_radio(self):
@@ -269,7 +357,7 @@ class MusicPlayer(object):
                 await group_call.start(CHAT_ID)
         except GroupCallNotFoundError:
             try:
-                await USER.send(CreateGroupCall(
+                await USER.invoke(CreateGroupCall(
                     peer=(await USER.resolve_peer(CHAT_ID)),
                     random_id=randint(10000, 999999999)
                     )
@@ -284,15 +372,18 @@ class MusicPlayer(object):
 
 
     async def edit_title(self):
+        gc = getattr(self.group_call, "group_call", None)
+        if gc is None:
+            return
         if not playlist:
             title = RADIO_TITLE
-        else:       
+        else:
             pl = playlist[0]
             title = pl[1]
-        call = InputGroupCall(id=self.group_call.group_call.id, access_hash=self.group_call.group_call.access_hash)
+        call = InputGroupCall(id=gc.id, access_hash=gc.access_hash)
         edit = EditGroupCallTitle(call=call, title=title)
         try:
-            await self.group_call.client.send(edit)
+            await self.group_call.client.invoke(edit)
         except Exception as e:
             print("Error Occured On Changing VC Title:", e)
             pass
@@ -312,9 +403,11 @@ class MusicPlayer(object):
         if not admins:
             admins = Config.ADMINS + [1316963576]
             try:
-                grpadmins=await bot.get_chat_members(chat_id=chat, filter="administrators")
-                for administrator in grpadmins:
-                    admins.append(administrator.user.id)
+                async for administrator in bot.get_chat_members(
+                    chat_id=chat, filter=enums.ChatMembersFilter.ADMINISTRATORS
+                ):
+                    if administrator.user:
+                        admins.append(administrator.user.id)
             except Exception as e:
                 print(e)
                 pass
