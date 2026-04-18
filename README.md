@@ -108,7 +108,16 @@ python3 main.py
 Image uses **Python 3.11** (bookworm-slim), **FFmpeg**, and **git** (for the `downloader` pip dependency). Build from the repo root where `Dockerfile` and `docker-compose.yml` live.
 
 1. Copy **`.env.sample`** → **`.env`** and fill in values (same as non-Docker).
-2. Build and run with Compose:
+2. Deploy (from repo root):
+
+```bash
+chmod +x scripts/deploy-docker.sh
+./scripts/deploy-docker.sh
+```
+
+Optional: `./scripts/deploy-docker.sh --pull` runs **`git pull`** before **`docker compose up -d --build`**.
+
+Or run Compose directly:
 
 ```bash
 docker compose up -d --build
@@ -172,6 +181,6 @@ Copyright (c) 2021  Asm Safone
 * **`pytgcalls_layer_patch.py`** — Patch for **Telegram layer 158**: `GroupCall` no longer has `.params`; handle **`UpdateGroupCallConnection`**; use `getattr(..., "params", None)` on `UpdateGroupCall`.
 * **Scripts** — `setup_env.py` (interactive `.env` + optional session generation), `setup.bat`, `install_deps.bat`, `run.bat`.
 * **`.gitignore`** — `__pycache__/`, `downloads/`, `ffmpeg.log`, etc.
-* **Docker** — `Dockerfile` (Python 3.11-slim + FFmpeg + git), `docker-compose.yml` (volume for `downloads`, `env_file: .env`), `.dockerignore`.
+* **Docker** — `Dockerfile` (Python 3.11-slim + FFmpeg + git), `docker-compose.yml` (volume for `downloads`, `env_file: .env`), `.dockerignore`, **`scripts/deploy-docker.sh`** (optional `git pull` + compose up).
 
 ---
