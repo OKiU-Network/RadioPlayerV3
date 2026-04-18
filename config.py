@@ -58,7 +58,7 @@ def _require_int_digits(key: str) -> int:
     if not raw.isdigit():
         print(
             f"Config error: {key} must be a non-empty integer (got {raw!r}). "
-            "Set it in .env or Docker env_file.",
+            "Set it in .env on the Docker host (same folder as docker-compose.yml), then recreate the container.",
             file=sys.stderr,
         )
         sys.exit(1)

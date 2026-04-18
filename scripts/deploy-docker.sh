@@ -11,6 +11,13 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+# Reject placeholders / empty required keys (Compose needs real values in .env beside docker-compose.yml)
+if ! (grep -E '^[[:space:]]*API_ID=' .env | head -1 | grep -qE '[0-9]{3,}'); then
+  echo "Error: .env must set API_ID to your numeric app id (from https://my.telegram.org/apps)."
+  echo "       Example: API_ID=12345678 or API_ID=\"12345678\""
+  exit 1
+fi
+
 if [[ "${1:-}" == "--pull" ]]; then
   echo "git pull..."
   git pull --ff-only

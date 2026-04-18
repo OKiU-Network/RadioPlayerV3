@@ -152,6 +152,8 @@ docker run -d --name radioplayerv3 --restart unless-stopped --env-file .env radi
 
 Do **not** commit `.env`; mount or pass `--env-file` only on the server.
 
+**If the container logs `API_ID` empty:** the file must live **next to `docker-compose.yml`** on the host (same folder you run `docker compose` from after `cd`), with real values — not `.env.sample` / placeholders. `docker compose` reads that file for variable substitution; rename or copy until `grep API_ID .env` shows your numeric id.
+
 ---
 
 ## 🪟 Windows & Pyrogram 2 (this tree)
