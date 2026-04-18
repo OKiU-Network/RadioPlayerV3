@@ -159,7 +159,34 @@ ensure_python39() {
   have_cmd python3.9 || die "python3.9 not available after install."
 }
 
+# Docker CLI + Compose v2 (`docker compose`) — what our deploy scripts use.
+docker_compose_ready() {
+  have_cmd docker || return 1
+  docker compose version >/dev/null 2>&1
+}
+
+_docker_ensure_user_group_and_service() {
+  local u
+  u="$(effective_user)"
+  if [[ -n "$u" && "$u" != "root" ]]; then
+    if id -nG "$u" 2>/dev/null | tr ' ' '\n' | grep -qx docker; then
+      echo "User '$u' is already in the 'docker' group."
+    else
+      sudo_run usermod -aG docker "$u" || true
+      echo ""
+      echo "Added user '$u' to the 'docker' group. Log out and back in (or: newgrp docker) before using docker without sudo."
+    fi
+  fi
+  sudo_run systemctl enable --now docker 2>/dev/null || true
+}
+
 install_docker_engine() {
+  if docker_compose_ready; then
+    echo "Docker is already installed with Compose v2 (\`docker compose\`) — skipping Docker install."
+    _docker_ensure_user_group_and_service
+    return 0
+  fi
+
   local fam
   fam=$(detect_family)
   echo "Installing Docker Engine + Compose plugin..."
@@ -182,15 +209,7 @@ install_docker_engine() {
       ;;
   esac
 
-  local u
-  u="$(effective_user)"
-  if [[ -n "$u" && "$u" != "root" ]]; then
-    sudo_run usermod -aG docker "$u" || true
-    echo ""
-    echo "Added user '$u' to the 'docker' group. Log out and back in (or: newgrp docker) before using docker without sudo."
-  fi
-
-  sudo_run systemctl enable --now docker 2>/dev/null || true
+  _docker_ensure_user_group_and_service
 }
 
 clone_or_update_repo() {
