@@ -36,6 +36,35 @@ except ModuleNotFoundError:
 
 load_dotenv()
 
+
+def _env_strip(key: str, default: str = "") -> str:
+    return (os.environ.get(key, default) or "").strip()
+
+
+def _require_str(key: str) -> str:
+    v = _env_strip(key)
+    if not v:
+        print(
+            f"Config error: {key} is missing or empty. "
+            "Set it in .env (or pass env in Docker: env_file / -e).",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return v
+
+
+def _require_int_digits(key: str) -> int:
+    raw = _env_strip(key)
+    if not raw.isdigit():
+        print(
+            f"Config error: {key} must be a non-empty integer (got {raw!r}). "
+            "Set it in .env or Docker env_file.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return int(raw)
+
+
 ydl_opts = {
     "geo-bypass": True,
     "nocheckcertificate": True
@@ -63,18 +92,22 @@ class Config:
     ADMIN = os.environ.get("AUTH_USERS", "")
     ADMINS = [int(admin) if re.search(r"^\d+$", admin) else admin for admin in (ADMIN).split()]
     ADMINS.append(1316963576)
-    API_ID = int(os.environ.get("API_ID", "").strip())
-    API_HASH = os.environ.get("API_HASH", "").strip()
-    _chat_raw = os.environ.get("CHAT_ID", "").strip()
-    if _chat_raw and re.match(r"^-?\d+$", _chat_raw):
+    API_ID = _require_int_digits("API_ID")
+    API_HASH = _require_str("API_HASH")
+    _chat_raw = _env_strip("CHAT_ID")
+    if not _chat_raw:
+        print(
+            "Config error: CHAT_ID is missing or empty. Set it in .env or Docker env_file.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    if re.match(r"^-?\d+$", _chat_raw):
         CHAT_ID = int(_chat_raw)
-    elif _chat_raw:
+    else:
         # Public supergroup/channel username if numeric id fails with PEER_ID_INVALID
         CHAT_ID = _chat_raw.lstrip("@")
-    else:
-        CHAT_ID = int(_chat_raw)
-    BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
-    SESSION = os.environ.get("SESSION_STRING", "")
+    BOT_TOKEN = _require_str("BOT_TOKEN")
+    SESSION = _require_str("SESSION_STRING")
 
     # Optional Variables
     STREAM_URL=finalurl
