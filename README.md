@@ -115,6 +115,8 @@ curl -fsSL https://raw.githubusercontent.com/OKiU-Network/RadioPlayerV3/master/i
 
 Optional: `RADIOPLAYER_REPO=... RADIOPLAYER_DIR=/opt/radio bash` (or export those before the pipe). Same flow: **clone → enter repo → install step by step → done.**
 
+**Ubuntu:** routinely tested on **22.04 / 24.04 LTS**. Default system Python on 24.04 is newer than 3.9 — use **Docker**, or bare-metal with **`python3.9`** (bootstrap can install via deadsnakes).
+
 If you already cloned the repo locally:
 
 ```bash
