@@ -134,3 +134,19 @@ Copyright (c) 2021  Asm Safone
 * [All Contributors](https://github.com/AsmSafone/RadioPlayerV3/graphs/contributors)
 
 ---
+
+## Changelog (OKiU fork — maintenance & Windows)
+
+### 2026-04 — Pyrogram 2, Telegram layer 158, local setup
+
+* **`requirements.txt`** — Pin `tgcalls==2.0.0` and `pytgcalls==2.1.0` (works on Python 3.10/3.11 with prebuilt wheels; avoids broken `tgcalls` resolution on Python 3.12).
+* **`config.py`** — Optional `heroku3` import; regex fix for admin IDs; `CHAT_ID` can be numeric **or** public `@username`; trim env strings.
+* **`user.py`** — Userbot uses `session_string=` so Pyrogram 2 string sessions work (no bogus SQLite path).
+* **`utils.py`** — Resolve **FFmpeg** on Windows (PATH + WinGet install path); **no `os.mkfifo` on Windows** (plain PCM file for radio); **`Client.send` → `invoke`** compatibility for pytgcalls; raw **`invoke`** for VC title / `CreateGroupCall`; **`get_chat_members`** uses `async for` + `ChatMembersFilter.ADMINISTRATORS` (Pyrogram 2); radio FFmpeg: low-latency flags, reconnect on HTTP streams, flush packets.
+* **`main.py`** — **`SetBotCommands`** via **`await bot.invoke(...)`** inside `async with bot`; optional `join_chat` / `get_chat` diagnostics for `CHAT_ID`.
+* **`plugins/bot/private.py`** — Safe captions when `message.from_user` is missing; callback admin check if `from_user` is absent.
+* **`pytgcalls_layer_patch.py`** — Patch for **Telegram layer 158**: `GroupCall` no longer has `.params`; handle **`UpdateGroupCallConnection`**; use `getattr(..., "params", None)` on `UpdateGroupCall`.
+* **Scripts** — `setup_env.py` (interactive `.env` + optional session generation), `setup.bat`, `install_deps.bat`, `run.bat`.
+* **`.gitignore`** — `__pycache__/`, `downloads/`, `ffmpeg.log`, etc.
+
+---
