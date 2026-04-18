@@ -43,9 +43,13 @@ from random import randint
 if not hasattr(Client, "send"):
     Client.send = Client.invoke
 
-from pytgcalls_layer_patch import apply_pytgcalls_pyrogram_layer_patch
+from pytgcalls_layer_patch import (
+    apply_pytgcalls_pyrogram_layer_patch,
+    apply_pytgcalls_reconnect_timeout,
+)
 
 apply_pytgcalls_pyrogram_layer_patch()
+apply_pytgcalls_reconnect_timeout()
 
 from pytgcalls import GroupCallFactory
 from pyrogram.errors import FloodWait

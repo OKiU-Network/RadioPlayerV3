@@ -2,6 +2,10 @@
 Pyrogram 2.x / Telegram layer 158: GroupCall no longer has .params; WebRTC JSON is sent
 via UpdateGroupCallConnection. pytgcalls 2.1.x only reads update.call.params — patch handlers.
 """
+from __future__ import annotations
+
+import os
+
 from pyrogram import ContinuePropagation
 from pyrogram.raw import types
 from pyrogram.raw.types import GroupCallDiscarded as PyrogramGroupCallDiscarded
@@ -44,3 +48,16 @@ def apply_pytgcalls_pyrogram_layer_patch() -> None:
     # RawUpdateHandler passes (client, update, users, chats) — first arg is client
     pb.PyrogramBridge._process_update = _process_update_patched
     pb.PyrogramBridge._process_group_call_update = _process_group_call_update_patched
+
+
+def apply_pytgcalls_reconnect_timeout() -> None:
+    """pytgcalls GroupCall uses __ASYNCIO_TIMEOUT=10s for reconnect/stop waits; slow links raise TimeoutError."""
+    from pytgcalls.implementation.group_call import GroupCall
+
+    raw = (os.environ.get("PYTGCALLS_ASYNCIO_TIMEOUT") or "45").strip()
+    try:
+        sec = float(raw)
+    except ValueError:
+        sec = 45.0
+    sec = max(10.0, min(sec, 300.0))
+    GroupCall._GroupCall__ASYNCIO_TIMEOUT = sec
