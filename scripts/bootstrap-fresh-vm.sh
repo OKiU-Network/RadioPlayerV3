@@ -6,8 +6,9 @@
 #           Python 3.9 + venv for bare-metal (tgcalls Linux wheels are cp39-only).
 #
 # Usage:
-#   curl -fsSL ... | bash   # or download and: bash scripts/bootstrap-fresh-vm.sh
+#   One-line (clone + this script): see ../install.sh
 #   bash scripts/bootstrap-fresh-vm.sh
+#   bash scripts/bootstrap-fresh-vm.sh --local   # after clone; uses RADIOPLAYER_DIR
 #
 set -euo pipefail
 
@@ -196,6 +197,19 @@ clone_or_update_repo() {
 # --- main --------------------------------------------------------------------
 
 main() {
+  local local_mode=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --local) local_mode=1; shift ;;
+      -h|--help)
+        echo "Usage: $0 [--local]"
+        echo "  --local  Repo already cloned; RADIOPLAYER_DIR or INSTALL_DIR_DEFAULT points at it (used by install.sh)."
+        exit 0
+        ;;
+      *) die "Unknown option: $1 (try --help)" ;;
+    esac
+  done
+
   need_root_or_sudo
   load_os_release
   local FAMILY
@@ -208,10 +222,17 @@ main() {
   echo ""
 
   local repo dest mode
-  read -r -p "Git clone URL [$REPO_DEFAULT]: " repo
-  repo=${repo:-$REPO_DEFAULT}
-  read -r -p "Install directory [$INSTALL_DIR_DEFAULT]: " dest
-  dest=${dest:-$INSTALL_DIR_DEFAULT}
+  if [[ "$local_mode" -eq 1 ]]; then
+    dest="${RADIOPLAYER_DIR:-${INSTALL_DIR_DEFAULT}}"
+    [[ -d "$dest/.git" ]] || die "Not a git repo (or missing): $dest — run install.sh or clone first."
+    repo="$REPO_DEFAULT"
+    echo "Using existing clone: $dest (--local)"
+  else
+    read -r -p "Git clone URL [$REPO_DEFAULT]: " repo
+    repo=${repo:-$REPO_DEFAULT}
+    read -r -p "Install directory [$INSTALL_DIR_DEFAULT]: " dest
+    dest=${dest:-$INSTALL_DIR_DEFAULT}
+  fi
 
   echo ""
   echo "How do you want to run the bot?"
@@ -236,7 +257,12 @@ main() {
   fi
 
   echo ""
-  clone_or_update_repo "$repo" "$dest"
+  if [[ "$local_mode" -eq 1 ]]; then
+    echo "Updating repo in $dest ..."
+    git -C "$dest" pull --ff-only || true
+  else
+    clone_or_update_repo "$repo" "$dest"
+  fi
   cd "$dest"
 
   if [[ ! -f .env ]]; then

@@ -107,14 +107,22 @@ python3 main.py
 
 ### Fresh VM (nothing installed yet)
 
-On **Ubuntu, Linux Mint, Debian, Fedora, or Arch** (also Manjaro / Endeavour), run from a clone of this repo:
+**One URL — downloads nothing by hand:** installs **git + curl** if needed, **clones this repo**, then runs the full bootstrap (Docker vs bare-metal, ffmpeg, `.env`, optional wizards):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/OKiU-Network/RadioPlayerV3/master/install.sh | bash
+```
+
+Optional: `RADIOPLAYER_REPO=... RADIOPLAYER_DIR=/opt/radio bash` (or export those before the pipe). Same flow: **clone → enter repo → install step by step → done.**
+
+If you already cloned the repo locally:
 
 ```bash
 chmod +x scripts/bootstrap-fresh-vm.sh bootstrap-fresh-vm.sh
 ./bootstrap-fresh-vm.sh
 ```
 
-Or: `bash scripts/bootstrap-fresh-vm.sh` — it installs **git, curl, ffmpeg**, optionally **Docker**, then clones/updates the repo and walks you through **Docker** vs **bare-metal Python 3.9**. On a totally empty system you may need `curl`/`git` once to fetch the script (e.g. `sudo apt install -y curl git`).
+Or: `bash scripts/bootstrap-fresh-vm.sh` — it installs **git, curl, ffmpeg**, optionally **Docker**, then clones/updates the repo and walks you through **Docker** vs **bare-metal Python 3.9**. The one-liner above avoids cloning first; it runs `install.sh` which then calls `scripts/bootstrap-fresh-vm.sh --local`.
 
 Image uses **Python 3.9** (bookworm-slim), **FFmpeg**, and **git** (for the `downloader` pip dependency). Build from the repo root where `Dockerfile` and `docker-compose.yml` live.
 
