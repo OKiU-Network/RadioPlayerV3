@@ -110,7 +110,14 @@ Image uses **Python 3.11** (bookworm-slim), **FFmpeg**, and **git** (for the `do
 **Interactive wizard (same questions as `setup_env.py`)** — writes **`.env`**, then optionally runs **`docker compose up -d --build`**:
 
 ```bash
-python setup_docker.py
+python3 setup_docker.py
+```
+
+Or use the shell helper (same as above; picks `python3` / `python`, warns if `docker` is missing):
+
+```bash
+chmod +x setup_docker.sh scripts/setup_docker.sh
+./setup_docker.sh
 ```
 
 On Windows you can double-click **`setup_docker.bat`** (needs Docker Desktop and Python with `pip install -r requirements.txt` if you generate a session string).
@@ -188,6 +195,6 @@ Copyright (c) 2021  Asm Safone
 * **`pytgcalls_layer_patch.py`** — Patch for **Telegram layer 158**: `GroupCall` no longer has `.params`; handle **`UpdateGroupCallConnection`**; use `getattr(..., "params", None)` on `UpdateGroupCall`.
 * **Scripts** — `setup_env.py` (interactive `.env` + optional session generation), `setup.bat`, `install_deps.bat`, `run.bat`.
 * **`.gitignore`** — `__pycache__/`, `downloads/`, `ffmpeg.log`, etc.
-* **Docker** — `Dockerfile` (Python 3.11-slim + FFmpeg + git), `docker-compose.yml` (volume for `downloads`, `env_file: .env`), `.dockerignore`, **`scripts/deploy-docker.sh`** (optional `git pull` + compose up).
+* **Docker** — `Dockerfile` (Python 3.11-slim + FFmpeg + git), `docker-compose.yml` (volume for `downloads`, `env_file: .env`), `.dockerignore`, **`setup_docker.py`** / **`setup_docker.sh`** (interactive `.env` + optional compose), **`scripts/deploy-docker.sh`** (optional `git pull` + compose up).
 
 ---
