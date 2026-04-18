@@ -1,5 +1,6 @@
 # RadioPlayerV3 — server deployment (Linux; includes FFmpeg + tgcalls wheels)
-FROM python:3.11-slim-bookworm
+# Python 3.10: tgcalls==2.0.0 has no cp311+ wheels on PyPI (required by pytgcalls==2.1.0).
+FROM python:3.10-slim-bookworm
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

@@ -105,12 +105,14 @@ python3 main.py
 
 ## 🐳 Docker (Linux server)
 
-Image uses **Python 3.11** (bookworm-slim), **FFmpeg**, and **git** (for the `downloader` pip dependency). Build from the repo root where `Dockerfile` and `docker-compose.yml` live.
+Image uses **Python 3.10** (bookworm-slim), **FFmpeg**, and **git** (for the `downloader` pip dependency). Build from the repo root where `Dockerfile` and `docker-compose.yml` live.
+
+**Bare-metal Linux:** use **Python 3.10** for `pip install -r requirements.txt`. The pinned **`tgcalls==2.0.0`** only has PyPI wheels for Python 3.6–3.10; on **Python 3.11+** pip cannot satisfy that pin (you may see only `tgcalls==3.0.0.dev6` available). Example: `sudo apt install python3.10 python3.10-venv` then `python3.10 -m venv venv && source venv/bin/activate && pip install -r requirements.txt`.
 
 **Interactive wizard (same questions as `setup_env.py`)** — writes **`.env`**, then optionally runs **`docker compose up -d --build`**:
 
 ```bash
-python3 setup_docker.py
+python3.10 setup_docker.py
 ```
 
 Or use the shell helper (same as above; picks `python3` / `python`, warns if `docker` is missing):
@@ -154,7 +156,7 @@ Do **not** commit `.env`; mount or pass `--env-file` only on the server.
 
 This codebase includes fixes for **Pyrogram 2**, **Telegram API layer 158** (voice chat updates), and **Windows** (FFmpeg resolution, no FIFO, optional `CHAT_ID` as `@username`).
 
-* Use **Python 3.10 or 3.11** (not 3.12 for local Windows: `tgcalls` wheels).
+* Use **Python 3.10** (recommended). The pinned **`tgcalls==2.0.0`** has no **Python 3.11+** wheels on PyPI; **3.12+** also lacks `tgcalls` wheels for this stack.
 * Install deps: run **`install_deps.bat`** or `py -3.10 -m pip install -r requirements.txt`.
 * Create `.env`: run **`setup.bat`** / `python setup_env.py`, or copy **`.env.sample`**.
 * Run: **`run.bat`** or `py -3.10 main.py`.
@@ -186,7 +188,7 @@ Copyright (c) 2021  Asm Safone
 
 ### 2026-04 — Pyrogram 2, Telegram layer 158, local setup
 
-* **`requirements.txt`** — Pin `tgcalls==2.0.0` and `pytgcalls==2.1.0` (works on Python 3.10/3.11 with prebuilt wheels; avoids broken `tgcalls` resolution on Python 3.12).
+* **`requirements.txt`** — Pin `tgcalls==2.0.0` and `pytgcalls==2.1.0` (prebuilt wheels on **Python 3.10** only among modern versions; **3.11+** cannot install this pin from PyPI).
 * **`config.py`** — Optional `heroku3` import; regex fix for admin IDs; `CHAT_ID` can be numeric **or** public `@username`; trim env strings.
 * **`user.py`** — Userbot uses `session_string=` so Pyrogram 2 string sessions work (no bogus SQLite path).
 * **`utils.py`** — Resolve **FFmpeg** on Windows (PATH + WinGet install path); **no `os.mkfifo` on Windows** (plain PCM file for radio); **`Client.send` → `invoke`** compatibility for pytgcalls; raw **`invoke`** for VC title / `CreateGroupCall`; **`get_chat_members`** uses `async for` + `ChatMembersFilter.ADMINISTRATORS` (Pyrogram 2); radio FFmpeg: low-latency flags, reconnect on HTTP streams, flush packets.
@@ -195,6 +197,6 @@ Copyright (c) 2021  Asm Safone
 * **`pytgcalls_layer_patch.py`** — Patch for **Telegram layer 158**: `GroupCall` no longer has `.params`; handle **`UpdateGroupCallConnection`**; use `getattr(..., "params", None)` on `UpdateGroupCall`.
 * **Scripts** — `setup_env.py` (interactive `.env` + optional session generation), `setup.bat`, `install_deps.bat`, `run.bat`.
 * **`.gitignore`** — `__pycache__/`, `downloads/`, `ffmpeg.log`, etc.
-* **Docker** — `Dockerfile` (Python 3.11-slim + FFmpeg + git), `docker-compose.yml` (volume for `downloads`, `env_file: .env`), `.dockerignore`, **`setup_docker.py`** / **`setup_docker.sh`** (interactive `.env` + optional compose), **`scripts/deploy-docker.sh`** (optional `git pull` + compose up).
+* **Docker** — `Dockerfile` (Python 3.10-slim + FFmpeg + git), `docker-compose.yml` (volume for `downloads`, `env_file: .env`), `.dockerignore`, **`setup_docker.py`** / **`setup_docker.sh`** (interactive `.env` + optional compose), **`scripts/deploy-docker.sh`** (optional `git pull` + compose up).
 
 ---
